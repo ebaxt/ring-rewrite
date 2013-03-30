@@ -1,19 +1,19 @@
 (ns com.ebaxt.ring-rewrite
-  (:require [ring.util.response :as response])
-  (:use [net.cgrand.enlive-html]))
+  (:import java.util.regex.Pattern)
+  (:require [ring.util.response :as response]
+            [clojure.string :as s]))
 
-(defn render
-  "Given a seq of Enlive nodes, return the corresponding HTML string."
-  [t]
-  (apply str (emit* t)))
+(defn do-rewrites [^String html rules]
+  (reduce (fn [^String acc [_ from to]]
+            (s/replace acc from to))
+          html rules))
 
-(defn rewrite [nodes]
-  nodes)
+(defn rewrite [^String html rules]
+  (let [tasks (group-by first rules)
+        {:keys [rewrite]} tasks]
+    (do-rewrites html rewrite)))
 
-(defn wrap-rewrite [handler]
+(defn wrap-rewrite [handler & rules]
   (fn [req]
     (let [{:keys [headers body] :as response} (handler req)]
-      (assoc response :body (-> body
-                                (html-snippet)
-                                (rewrite)
-                                (render))))))
+      (assoc response :body (rewrite body rules)))))
