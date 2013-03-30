@@ -8,10 +8,11 @@ Configure the ring handler
 
 ```clojure
 (-> app
-(wrap-rewrite [:rewrite "http://code.jquery.com" "http://cdn.com"]
-[:rewrite "js/" "http://cdn.com/"]
-[:rewrite #"css/(\w+)" "http://cdn.com/$1"]
-[:rewrite #"\".+/(img/\w+)" "\"http://mypics.com/$1"]))
+  (wrap-rewrite 
+    [:rewrite "http://code.jquery.com" "http://cdn.com"]
+    [:rewrite "js/" "http://cdn.com/"]
+    [:rewrite #"css/(\w+)" "http://cdn.com/$1"]
+    [:rewrite #"\".+/(img/\w+)" "\"http://mypics.com/$1"]))
 ```
 
 Given the above configuration, this snippet
