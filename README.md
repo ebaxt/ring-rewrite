@@ -1,6 +1,6 @@
 # ring-rewrite
 
-Simple middleware for defining and applying simple rewrite rules.
+Simple middleware for defining and applying rewrite rules.
 
 ## Usage
 
