@@ -43,10 +43,15 @@
 
 (deftest rewite-test
   (let [handler (wrap-rewrite identity
-                              [:rewrite "/match/me?hello=world" "/match?hello=world"])
-        {:keys [uri query-string]} (handler (request :get "/match/me" {:hello "world"}))]
-    (is (= uri "/match"))
-    (is (= query-string "hello=world"))))
+                              [:rewrite "/match/me?hello=world" "/match?hello=world"]
+                              [:rewrite "/match/me" "/match"]
+                              [:rewrite #"/match/foo\?(.+)" "/match/you?$1"])]
+    (are [req u qs] (let [{:keys [uri query-string]} (handler req)]
+                      (is (= uri u))
+                      (is (= query-string qs)))
+         (request :get "/match/me" {:hello "world"}) "/match" "hello=world" 
+         (request :get "/match/me") "/match" nil 
+         (request :get "/match/foo" {:hello "world" :q "whatever"}) "/match/you" "hello=world&q=whatever" )))
 
 (run-tests)
 
