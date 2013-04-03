@@ -79,4 +79,3 @@
          (request :get "/redirect/303" {:hello "clojure"}) 303 "http://www.google.com/303?q=clojure"
          (request :get "/redirect/307" {:hello "clojure"}) 307 "http://www.google.com/307?q=clojure")))
 
-(run-tests)
