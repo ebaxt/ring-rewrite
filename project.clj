@@ -11,4 +11,4 @@
                              [leinjacker "0.4.1"]]
                    :dependencies [[ring-mock "0.1.3"]
                                   [ring/ring-jetty-adapter "1.1.8"]]
-                   :ring {:handler com.ebaxt.ring-rewrite-test/rewrite-handler}}})
+                   :ring {:handler com.ebaxt.ring-rewrite-test/test-app}}})

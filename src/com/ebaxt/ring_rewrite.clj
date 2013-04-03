@@ -1,7 +1,7 @@
 (ns com.ebaxt.ring-rewrite
   (:require [ring.util.response :as response]
-            [clojure.string :as s]
-            [ring.util.codec :refer [url-decode]]))
+            [clojure.string :as s]))
+
 (defn- regex? [x]
   (instance? java.util.regex.Pattern x))
 
@@ -23,7 +23,7 @@
 (defn construct-url [{:keys [uri query-string]}]
   (if (s/blank? query-string)
     uri
-    (str uri "?" (url-decode query-string))))
+    (str uri "?" query-string)))
 
 (defn rule-matches? [[_ from to] req]
   (let [url (construct-url req)]
