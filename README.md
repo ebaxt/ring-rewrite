@@ -2,6 +2,8 @@
 
 Simple middleware for defining and applying rewrite rules.
 
+![Build Status](https://travis-ci.org/ebaxt/ring-rewrite.png)
+
 ## Usage
 
 Configure the ring handler
