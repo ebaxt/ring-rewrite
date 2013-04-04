@@ -21,9 +21,8 @@
       (assoc response :body (rewrite body rules)))))
 
 (defn construct-url [{:keys [uri query-string]}]
-  (if (s/blank? query-string)
-    uri
-    (str uri "?" query-string)))
+  (str uri (if-not (s/blank? query-string)
+             (str "?" query-string))))
 
 (defn rewrite-fun [url from to req]
   (if (regex? from)
@@ -49,9 +48,7 @@
 (defn predicates-matches? [[_ _ _ & options] {:keys [request-method]}]
   (let [{:keys [method]} (options-map options)]
     (if method
-      (if (= method request-method)
-        true
-        false)
+      (= method request-method)
       true)))
 
 (defn rule-matches? [[_ from to] req]
@@ -69,10 +66,10 @@
     (rule-matches? rule req))))
 
 (defn eval-headers [x]
-  (let [hdrs (if (and (not (map? x)) (ifn? x)) (x) x)]
-    (if-not (map? hdrs)
-      (throw (IllegalArgumentException. ":headers must evaluate to map!")))
-    hdrs))
+  {:pre [(or (map? x)
+             (ifn? x))]
+   :post [(map? %)]}
+  (if (map? x) x (x)))
 
 (defn merge-additional-hdrs [resp options]
   (if-let [hdrs (:headers (options-map options))]
@@ -80,11 +77,10 @@
     resp))
 
 (defn apply-rewrite [[_ from to & options] req]
-  (let [url (construct-url req)
-        path (resolve-rewrite from to req)
-        [uri query-string] (s/split path #"\?" 2)
-        response (assoc req :uri uri :query-string query-string)]
-    [true (merge-additional-hdrs response options)]))
+  (let [[u qs] (-> (resolve-rewrite from to req)
+                   (s/split #"\?" 2))
+        resp (assoc req :uri u :query-string qs)]
+    [true (merge-additional-hdrs resp options)]))
 
 (defn redirect-with-status
   [status url]
