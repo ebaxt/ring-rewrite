@@ -31,7 +31,7 @@
      (string? from) (= from url)
      (regex? from) (re-matches from url) 
      :else (throw (IllegalArgumentException.
-                   (str "Illegal from type in rule, only strings and regexes are supported!"))))))
+                   (str "Illegal 'from' type in rule, only strings and regexes are supported!"))))))
 
 (defn rewrite-fun [url from to req]
   (if (regex? from)
@@ -49,33 +49,33 @@
       (rewrite-fun url from to req)
       (rewrite-str url from to))))
 
+(defn apply-rewrite [[_ from to & options] req]
+  (let [url (construct-url req)
+        path (resolve-rewrite from to req)
+        [uri query-string] (s/split path #"\?" 2)]
+    [true (assoc req :uri uri :query-string query-string)]))
+
 (defn redirect-with-status
   [status url]
   {:status status
    :headers {"Location" url}
    :body ""})
 
-(defmulti apply-rule (fn [rule req]
-                       (first rule)))
-
-(defmethod apply-rule :rewrite [[_ from to options] req]
-  (let [url (construct-url req)
-        path (resolve-rewrite from to req)
-        [uri query-string] (s/split path #"\?" 2)]
-    [true (assoc req :uri uri :query-string query-string)]))
-
-(defmethod apply-rule :default [[rule-type from to options] req]
+(defn apply-redirect [[rule-type from to & options] req]
   (if (contains? #{:301 :302 :303 :307} rule-type)
-    [false (redirect-with-status (Integer. (name rule-type)) (resolve-rewrite from to req))]
-    (throw  (IllegalArgumentException. (str "Unsupported rule: " (first rule-type))))))
+    [false (redirect-with-status (Integer. (name rule-type)) (resolve-rewrite from to req))]))
+
+(defn dispatch-rule [[rule-type :as rule] req]
+  (condp contains? rule-type 
+    #{:rewrite} (apply-rewrite rule req)
+    #{:301 :302 :303 :307} (apply-redirect rule req)
+    (throw  (IllegalArgumentException. (str "Unsupported rule: " rule-type)))))
 
 (defn wrap-rewrite [handler & rules]
   (fn [req]
     (if-let [rule (first (drop-while #((complement rule-matches?) % req) rules))]
-      (let [[continue result] (apply-rule rule req)]
+      (let [[continue result] (dispatch-rule rule req)]
         (if continue
           (handler result)
           result))
-      (do
-        (println "No match!")
-        (handler req)))))
+      (handler req))))
