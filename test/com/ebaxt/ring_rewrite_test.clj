@@ -81,4 +81,8 @@
          (request :get "/redirect/303" {:hello "clojure"}) 303 "http://www.google.com/303?q=clojure" #{"Location"}
          (request :get "/redirect/307" {:hello "clojure"}) 307 "http://www.google.com/307?q=clojure" #{"Location"})))
 
-
+(deftest predicate-test
+  (let [handler (wrap-rewrite identity
+                              [:rewrite "/foo" "/no_longer_available.html" :method :post])]
+    (is (= "/no_longer_available.html" (:uri (handler (request :post "/foo")))))
+    (is (= "/foo" (:uri (handler (request :get "/foo")))))))
