@@ -51,31 +51,34 @@
 
 (deftest rewite-test
   (let [handler (wrap-rewrite identity
-                              [:rewrite "/match/me?hello=world" "/match?hello=world"]
-                              [:rewrite "/match/me" "/match"]
+                              [:rewrite "/match/me?hello=world" "/match?hello=world" :headers {"Cache-Control" "no-cache"}]
+                              [:rewrite "/match/me" "/match" :headers (fn [] {"Expires" (str (java.util.Date.))})]
                               [:rewrite #"/match/foo\?(.+)" "/match/you?$1"]
                               [:rewrite "/foo/bar" (fn [from req] "/baz/qux")]
                               [:rewrite #"/foo/(bar)/baz" (fn [[_ grp] {:keys [server-name uri]}] (str "http://" server-name "/" uri "/" grp))])]
-    (are [req u qs] (let [{:keys [uri query-string]} (handler req)]
-                      (is (= uri u))
-                      (is (= query-string qs)))
-         (request :get "/match/me" {:hello "world"}) "/match" "hello=world" 
-         (request :get "/match/me") "/match" nil 
-         (request :get "/match/foo" {:hello "world" :q "whatever"}) "/match/you" "hello=world&q=whatever"
-         (request :get "/foo/bar") "/baz/qux" nil
-         (request :get "/foo/bar/baz") "http://localhost//foo/bar/baz/bar" nil)))
+    (are [req u qs hdrs] (let [{:keys [uri query-string headers]} (handler req)]
+                           (is (= (every? #(contains? headers %1) hdrs)))
+                           (is (= uri u))
+                           (is (= query-string qs)))
+         (request :get "/match/me" {:hello "world"}) "/match" "hello=world" #{"Cache-Control"}
+         (request :get "/match/me") "/match" nil #{"Expires"}
+         (request :get "/match/foo" {:hello "world" :q "whatever"}) "/match/you" "hello=world&q=whatever" #{}
+         (request :get "/foo/bar") "/baz/qux" nil #{}
+         (request :get "/foo/bar/baz") "http://localhost//foo/bar/baz/bar" nil #{})))
 
 (deftest redirect-test
   (let [handler (wrap-rewrite identity
-                              [:301 #"/redirect/301\?hello=(.+)" "http://www.google.com/301?q=$1"]
+                              [:301 #"/redirect/301\?hello=(.+)" "http://www.google.com/301?q=$1" :headers {"Cache-Control" "no-cache"}]
                               [:302 #"/redirect/302\?hello=(\w+)" "http://www.google.com/302?q=$1"]
                               [:303 #"/redirect/303\?hello=(\w+)" "http://www.google.com/303?q=$1"]
                               [:307 #"/redirect/307\?hello=(\w+)" "http://www.google.com/307?q=$1"])]
-    (are [req sts location] (let [{:keys [status headers]} (handler req)]
-                              (is (= status sts))
-                              (is (= (get headers "Location") location)))
-         (request :get "/redirect/301" {:hello "clojure rocks"}) 301 "http://www.google.com/301?q=clojure+rocks"
-         (request :get "/redirect/302" {:hello "clojure"}) 302 "http://www.google.com/302?q=clojure"
-         (request :get "/redirect/303" {:hello "clojure"}) 303 "http://www.google.com/303?q=clojure"
-         (request :get "/redirect/307" {:hello "clojure"}) 307 "http://www.google.com/307?q=clojure")))
+    (are [req sts location hdrs] (let [{:keys [status headers]} (handler req)]
+                                   (is (every? #(contains? headers %1) hdrs))
+                                   (is (= status sts))
+                                   (is (= (get headers "Location") location)))
+         (request :get "/redirect/301" {:hello "clojure rocks"}) 301 "http://www.google.com/301?q=clojure+rocks" #{"Cache-Control" "Location"}
+         (request :get "/redirect/302" {:hello "clojure"}) 302 "http://www.google.com/302?q=clojure" #{"Location"}
+         (request :get "/redirect/303" {:hello "clojure"}) 303 "http://www.google.com/303?q=clojure" #{"Location"}
+         (request :get "/redirect/307" {:hello "clojure"}) 307 "http://www.google.com/307?q=clojure" #{"Location"})))
+
 

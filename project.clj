@@ -8,7 +8,8 @@
                  [com.novemberain/pantomime "1.7.0"]]
   :profiles {
              :dev {:plugins [[lein-ring "0.8.3"]
-                             [leinjacker "0.4.1"]]
+                             [leinjacker "0.4.1"]
+                             [lein-kibit "0.0.8"]]
                    :dependencies [[ring-mock "0.1.3"]
                                   [ring/ring-jetty-adapter "1.1.8"]
                                   [enlive "1.0.1"]]

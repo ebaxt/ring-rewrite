@@ -49,11 +49,28 @@
       (rewrite-fun url from to req)
       (rewrite-str url from to))))
 
+(defn options-map [coll]
+  (reduce (fn [m [k v]]
+            (assoc m k v))
+          {} (partition 2 coll)))
+
+(defn eval-headers [x]
+  (let [hdrs (if (and (not (map? x)) (ifn? x)) (x) x)]
+    (if-not (map? hdrs)
+      (throw (IllegalArgumentException. ":headers must evaluate to map!")))
+    hdrs))
+
+(defn merge-additional-hdrs [resp options]
+  (if-let [hdrs (:headers (options-map options))]
+    (update-in resp [:headers] merge (eval-headers hdrs))
+    resp))
+
 (defn apply-rewrite [[_ from to & options] req]
   (let [url (construct-url req)
         path (resolve-rewrite from to req)
-        [uri query-string] (s/split path #"\?" 2)]
-    [true (assoc req :uri uri :query-string query-string)]))
+        [uri query-string] (s/split path #"\?" 2)
+        response (assoc req :uri uri :query-string query-string)]
+    [true (merge-additional-hdrs response options)]))
 
 (defn redirect-with-status
   [status url]
@@ -62,8 +79,9 @@
    :body ""})
 
 (defn apply-redirect [[rule-type from to & options] req]
-  (if (contains? #{:301 :302 :303 :307} rule-type)
-    [false (redirect-with-status (Integer. (name rule-type)) (resolve-rewrite from to req))]))
+  (let [status (Integer. (name rule-type))
+        url (resolve-rewrite from to req)]
+    [false  (merge-additional-hdrs (redirect-with-status status url) options)]))
 
 (defn dispatch-rule [[rule-type :as rule] req]
   (condp contains? rule-type 
