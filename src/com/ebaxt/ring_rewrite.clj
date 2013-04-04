@@ -62,7 +62,7 @@
      :else (throw (IllegalArgumentException.
                    (str "Illegal 'from' type in rule, only strings and regexes are supported!"))))))
 
-(defn no-match [rule req]
+(defn no-matching-rule [rule req]
   (not
    (and
     (predicates-matches? rule req)
@@ -105,7 +105,7 @@
 
 (defn wrap-rewrite [handler & rules]
   (fn [req]
-    (if-let [rule (first (drop-while #(no-match % req) rules))]
+    (if-let [rule (first (drop-while #(no-matching-rule % req) rules))]
       (let [[continue result] (dispatch-rule rule req)]
         (if continue
           (handler result)
