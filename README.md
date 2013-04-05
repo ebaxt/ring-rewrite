@@ -21,7 +21,7 @@ Define rewrite and redirect rules and apply them to the incoming request.
   (wrap-rewrite
     [:rewrite "/foo" "/bar"]
     [:rewrite #"/foo/(.+)/(.+)" "/bar/$1/$2"]
-    [:301 #"/search/\?q=(.+)" "http://www.google.com/search?q=$1"]  
+    [:301 #"/search\?q=(.+)" "http://www.google.com/search?q=$1"]  
     
     ;Options can be applied to only match specific methods, schemes or hosts
     [:302 "/example" "/moved/example" :host "example.com" :scheme :https :method :get]   
