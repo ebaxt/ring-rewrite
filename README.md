@@ -1,61 +1,41 @@
 # ring-rewrite
 
-Simple middleware for defining and applying rewrite rules.
+Ring middleware for defining and applying rewrite rules. In many cases you can get away with ring-rewrite instead of writing Apache mod_rewrite rules. Inspired by [rack-rewrite](https://github.com/jtrupiano/rack-rewrite).
 
 ![Build Status](https://travis-ci.org/ebaxt/ring-rewrite.png)
 
+## Why
+
+[Use-cases](https://github.com/jtrupiano/rack-rewrite#use-cases)
+
 ## Usage
 
-Configure the ring handler
+ring-middleware consists of two handlers, `wrap-rewrite` for handling incoming request and `rewrite-page` for updating the reponse body.
+
+### Request
+
+Define rewrite and redirect rules and apply them to the incoming request.
 
 ```clojure
 (-> app
-  (wrap-rewrite 
-    [:rewrite "http://code.jquery.com" "http://cdn.com"]
-    [:rewrite "js/" "http://cdn.com/"]
-    [:rewrite #"css/(\w+)" "http://cdn.com/$1"]
-    [:rewrite #"\".+/(img/\w+)" "\"http://mypics.com/$1"]))
+  (wrap-rewrite
+    [:rewrite "/foo/bar.html" "/archive/bar.html" :headers (fn [] {"Expires" (str (java.util.Date.))})]
+    [:rewrite "/baz" "/qux" :host "foobar.com"]
+    [:301 #"/search/\?q=(.+)" "http://www.google.com/search?q=$1" :method :get}])
 ```
 
-Given the above configuration, this snippet
+### Response (experimental)
 
-```html
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Bootstrap 101 Template</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
-  </head>
-  <body>
-    <h1>Hello, world!</h1>
-    <script src="http://code.jquery.com/jquery.js"></script>
-    <script src="js/bootstrap.min.js"></script>
-    <img src="http://clojure.org/img/logo.png" />
-  </body>
-</html>
+Adds support for rewriting the outgoing markup on the fly.
+
+```clojure
+(-> app
+  (rewrite-page 
+    [:rewrite #"css/(\w+)" "http://cdn.com/$1"]))
+    
+    ;before <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
+    ;after <link href="http://cdn.com/bootstrap.min.css" rel="stylesheet" media="screen">
 ```
-
-will be transformed into
-
-```html
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Bootstrap 101 Template</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="http://cdn.com/bootstrap.min.css" rel="stylesheet" media="screen">
-  </head>
-  <body>
-    <h1>Hello, world!</h1>
-    <script src="http://cdn.com/jquery.js"></script>
-    <script src="http://cdn.com/bootstrap.min.js"></script>
-    <img src="http://mypics.com/img/logo.png" />
-  </body>
-</html>
-```
-
-
 
 ## License
 
