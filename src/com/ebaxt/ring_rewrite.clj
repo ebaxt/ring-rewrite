@@ -51,26 +51,26 @@
       (pred req)
       true)))
 
-;FIXUP fugly and impossible to read
 (defn options-matches? [options req]
   (let [lookup {:method [:request-method]
                 :host [:headers "host"]
                 :scheme [:scheme]}
-        ks (into #{} (keys lookup))
-        
+        ks (set (keys lookup))
         options-match-result (reduce (fn [acc k]
-                              (let [req-k (get-in req (k lookup))]
-                                (cons (= (k options) req-k) acc)))
-                            [] (filter ks (keys options)))]
+                                       (let [req-k (get-in req (k lookup))]
+                                         (cons (= (k options) req-k) acc)))
+                                     [] (filter ks (keys options)))]
     (every? #{true} options-match-result)))
 
-(defn rule-matches? [[_ from to] req]
-  (let [url (construct-url req)]
-    (cond
-     (string? from) (= from url)
-     (regex? from) (re-matches from url) 
-     :else (throw (IllegalArgumentException.
-                   (str "Illegal 'from' type in rule, only strings and regexes are supported!"))))))
+(defn rule-matches? [[_ from to & options] req]
+  (let [url (construct-url req)
+        do-not-match (:not (options-map options))]
+    (when-not (= do-not-match url)
+      (cond
+       (string? from) (= from url)
+       (regex? from) (re-matches from url) 
+       :else (throw (IllegalArgumentException.
+                     (str "Illegal 'from' type in rule, only strings and regexes are supported!")))))))
 
 (defn no-matching-rule [[_ from to & options :as rule] req]
   (not
@@ -91,8 +91,7 @@
     resp))
 
 (defn apply-rewrite [[_ from to & options] req]
-  (let [[u qs] (-> (resolve-rewrite from to req)
-                   (s/split #"\?" 2))
+  (let [[u qs] (s/split (resolve-rewrite from to req) #"\?" 2)
         resp (assoc req :uri u :query-string qs)]
     [true (merge-additional-hdrs resp options)]))
 
@@ -121,3 +120,4 @@
           (handler result)
           result))
       (handler req))))
+

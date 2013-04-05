@@ -9,8 +9,6 @@
 (def html-page
   (slurp "resources/foo.html"))
 
-
-
 (def rewrite-handler
   (fn [req]
     (pprint req)
@@ -101,9 +99,18 @@
 
 (deftest predicate-test
   (let [handler (wrap-rewrite identity
-                              [:rewrite "/foo" "/example" :if (fn [req] (= "example.com" (get-in req [:headers "host"])))])]
-    (are [path req] (is = (:uri (handler req)))
+                              [:rewrite "/foo" "/example" :if (fn [req] (= "example.com" (get-in req [:headers "host"])))]
+                              [:rewrite #"/features.*" "/feature_request" :not "/features" :scheme :https :if (fn [req] (= "example.com" (get-in req [:headers "host"])))])]
+    (are [path req] (is (= path (:uri (handler req)))) 
          "/foo" (request :get "/foo")
          "/example" (header (request :get "/foo") "host" "example.com")
-         "/foo" (header (request :get "/foo") "host" "foo.com"))))
+         "/foo" (header (request :get "/foo") "host" "foo.com")
+         "/features" (request :get "/features")
+         "/features.xml"  (request :get "/features.xml")
+         "/features.xml" (header (request :get "/features.xml") "host" "example.com")
+         "/feature_request" (assoc (header (request :get "/features.xml") "host" "example.com") :scheme :https))))
 
+;; (deftest send-file-test
+;;   (let [handler (wrap-rewrite identity
+;;                               [:send-file #".+/(.+.(png|jpg|mov))" "/resources/img/$1"])]
+;;     (handler (request :get "/foo/bar/baz.png"))))
