@@ -45,11 +45,24 @@
             (assoc m k v))
           {} (partition 2 coll)))
 
-(defn predicates-matches? [[_ _ _ & options] {:keys [request-method]}]
-  (let [{:keys [method]} (options-map options)]
-    (if method
-      (= method request-method)
+(defn predicate-matches? [options req]
+  (let [{pred :if} options]
+    (if pred
+      (pred req)
       true)))
+
+;FIXUP fugly and impossible to read
+(defn options-matches? [options req]
+  (let [lookup {:method [:request-method]
+                :host [:headers "host"]
+                :scheme [:scheme]}
+        ks (into #{} (keys lookup))
+        
+        options-match-result (reduce (fn [acc k]
+                              (let [req-k (get-in req (k lookup))]
+                                (cons (= (k options) req-k) acc)))
+                            [] (filter ks (keys options)))]
+    (every? #{true} options-match-result)))
 
 (defn rule-matches? [[_ from to] req]
   (let [url (construct-url req)]
@@ -59,10 +72,11 @@
      :else (throw (IllegalArgumentException.
                    (str "Illegal 'from' type in rule, only strings and regexes are supported!"))))))
 
-(defn no-matching-rule [rule req]
+(defn no-matching-rule [[_ from to & options :as rule] req]
   (not
    (and
-    (predicates-matches? rule req)
+    (predicate-matches? (options-map options) req)
+    (options-matches?  (options-map options) req)
     (rule-matches? rule req))))
 
 (defn eval-headers [x]

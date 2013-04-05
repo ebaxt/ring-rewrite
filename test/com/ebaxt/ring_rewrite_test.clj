@@ -13,6 +13,7 @@
 
 (def rewrite-handler
   (fn [req]
+    (pprint req)
     (rewrite-page req
                   [:rewrite #"css/(\w+)" "http://cdn.com/$1"]
                   [:rewrite "http://code.jquery.com" "http://cdn.com"]
@@ -81,8 +82,28 @@
          (request :get "/redirect/303" {:hello "clojure"}) 303 "http://www.google.com/303?q=clojure" #{"Location"}
          (request :get "/redirect/307" {:hello "clojure"}) 307 "http://www.google.com/307?q=clojure" #{"Location"})))
 
+(deftest options-test
+  (let [handler (wrap-rewrite identity
+                              [:rewrite "/foo" "/no_longer_available.html" :method :post]
+                              [:rewrite "/baz" "/qux" :host "foobar.com"]
+                              [:rewrite "/both" "/both/correct" :host "ebaxt.com" :method :post]
+                              [:rewrite "/http" "/https" :scheme :https])]
+    (are [path req] (is = (:uri (handler req)))
+         "/no_longer_available.html"  (request :post "/foo")
+         "/foo" (request :get "/foo")
+         "/baz"  (request :get "/baz")
+         "/qux" (header (request :get "/baz" ) "host" "foobar.com")
+         "/both" (request :post "/both")
+         "/both" (header (request :get "/both" ) "host" "ebaxt.com")
+         "/both/correct" (header (request :post "/both") "host" "ebaxt.com")
+         "/http" (request :get "/http")
+         "/https" (assoc (request :get "/http") :scheme :https))))
+
 (deftest predicate-test
   (let [handler (wrap-rewrite identity
-                              [:rewrite "/foo" "/no_longer_available.html" :method :post])]
-    (is (= "/no_longer_available.html" (:uri (handler (request :post "/foo")))))
-    (is (= "/foo" (:uri (handler (request :get "/foo")))))))
+                              [:rewrite "/foo" "/example" :if (fn [req] (= "example.com" (get-in req [:headers "host"])))])]
+    (are [path req] (is = (:uri (handler req)))
+         "/foo" (request :get "/foo")
+         "/example" (header (request :get "/foo") "host" "example.com")
+         "/foo" (header (request :get "/foo") "host" "foo.com"))))
+
