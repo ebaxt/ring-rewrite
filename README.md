@@ -24,6 +24,8 @@ Define rewrite and redirect rules and apply them to the incoming request.
     [:301 #"/search/\?q=(.+)" "http://www.google.com/search?q=$1" :method :get}])
 ```
 
+See [tests](https://github.com/ebaxt/ring-rewrite/blob/master/test/com/ebaxt/ring_rewrite_test.clj) for more examples.
+
 ### Response (experimental)
 
 Adds support for rewriting the outgoing markup on the fly.
