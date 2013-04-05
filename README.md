@@ -4,6 +4,22 @@ Ring middleware for defining and applying rewrite rules. In many cases you can g
 
 ![Build Status](https://travis-ci.org/ebaxt/ring-rewrite.png)
 
+## Install
+
+###Leiningen
+
+    [ring-rewrite "0.1.0"]
+
+###Maven
+
+```xml
+<dependency>
+  <groupId>ring-rewrite</groupId>
+  <artifactId>ring-rewrite</artifactId>
+  <version>0.1.0</version>
+</dependency>
+```
+
 ## Why
 
 [Use-cases](https://github.com/jtrupiano/rack-rewrite#use-cases)
