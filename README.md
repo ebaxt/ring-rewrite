@@ -30,7 +30,7 @@ Define rewrite and redirect rules and apply them to the incoming request.
     [:rewrite "/example2" "/moved/example2" :if (fn [req] (= "enabled" (System/getProperty "rewrites")))]
     [:rewrite #"/features.*" "/feature_request" :not "/features"] ;match /features.xml not /features
     
-    ;Use a funtion to decide where to redirect or rewrite to
+    ;Use a funtion to decide where to redirect/rewrite to
     [:rewrite "/custom/rule" (fn [from req] ...)]
     [:303 #"/custom/rule?q=(.+)" (fn [[_ grp] {:keys [uri] :as req}] ...)]
     
@@ -69,6 +69,10 @@ Adds support for rewriting the outgoing markup on the fly.
   <version>0.1.0</version>
 </dependency>
 ```
+
+## Todo
+
+:send-file and :x-send-file support
 
 ## License
 
