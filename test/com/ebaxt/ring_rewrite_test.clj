@@ -3,28 +3,10 @@
   (:use [ring.adapter.jetty]
         [com.ebaxt.ring-rewrite]
         [clojure.test]
-        [clojure.pprint]
         [ring.mock.request]))
 
 (def html-page
   (slurp "resources/foo.html"))
-
-(def rewrite-handler
-  (fn [req]
-    (pprint req)
-    (rewrite-page req
-                  [:rewrite #"css/(\w+)" "http://cdn.com/$1"]
-                  [:rewrite "http://code.jquery.com" "http://cdn.com"]
-                  [:rewrite #"http://(.+)/directory/(\w+)/(\w+)" "http://$1/$2/$3"]
-                  [:rewrite #"\".+/(img/\w+)" "\"http://mypics.com/$1"])))
-
-(def redirect-handler
-  (fn [req]
-    (wrap-rewrite req
-                  [:302 #"/search\?q=(.+)" "http://google.com/search?q=$1"])))
-
-(def test-app (-> rewrite-handler
-                  redirect-handler))
 
 (defn- get-attr [nodes id t]
   (get-in (first (h/select nodes [(h/id= id)])) [:attrs t]))
