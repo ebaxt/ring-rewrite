@@ -25,7 +25,6 @@
 
 (def rewrite-handler
   (fn [req]
-    (pprint req)
     (rewrite-page req
                   [:rewrite #"css/(\w+)" "http://cdn.com/$1"]
                   [:rewrite "http://code.jquery.com" "http://cdn.com"]

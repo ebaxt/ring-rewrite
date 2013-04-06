@@ -41,9 +41,7 @@
       (rewrite-str url from to))))
 
 (defn options-map [coll]
-  (reduce (fn [m [k v]]
-            (assoc m k v))
-          {} (partition 2 coll)))
+  (apply hash-map coll))
 
 (defn predicate-matches? [options req]
   (let [{pred :if} options]
