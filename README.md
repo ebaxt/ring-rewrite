@@ -29,6 +29,9 @@ Define rewrite and redirect rules and apply them to the incoming request.
     ;Use predicates to decide whether to apply rule
     [:rewrite "/example2" "/moved/example2" :if (fn [req] (= "enabled" (System/getProperty "rewrites")))]
     [:rewrite #"/features.*" "/feature_request" :not "/features"] ;match /features.xml not /features
+    [:rewrite #"/secret/name/(.+)" "/secret/place/$1"
+    :if (fn [{:keys [headers]}] (= "42" (get headers  "x-secret")))
+    :not "/secret/name/bully"]
     
     ;Use a funtion to decide where to redirect/rewrite to
     [:rewrite "/custom/rule" (fn [from req] ...)]
