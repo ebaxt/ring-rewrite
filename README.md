@@ -2,7 +2,8 @@
 
 Ring middleware for defining and applying rewrite rules. In many cases you can get away with ring-rewrite instead of writing Apache mod_rewrite rules. Inspired by [rack-rewrite](https://github.com/jtrupiano/rack-rewrite).
 
-![Build Status](https://travis-ci.org/ebaxt/ring-rewrite.png)
+![Build Status](https://circleci.com/gh/ebaxt/ring-rewrite.png?circle-token=4f7d9aa49c5ded3d17c304260ad1c3154f95a0ac)
+
 
 ## Why
 
